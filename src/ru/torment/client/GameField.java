@@ -297,15 +297,6 @@ public class GameField extends JComponent implements ActionListener
 			graphics2d.dispose();
 			g2d.drawImage( image, 100, 100, null );
 
-//			BufferedImage bufferedImage = null;
-//			try {
-//				bufferedImage = ImageIO.read( new File("/ru/torment/icons/banana.gif") );
-//			} catch (IOException e) {
-//				e.printStackTrace();
-//			}
-//			if ( bufferedImage != null )
-//				g2d.drawImage( bufferedImage, 100, 100, null );
-
 			g2d.fill( shape );
 
 			if ( unit.isDead() ) { continue; }
