@@ -1,6 +1,7 @@
 package ru.torment.client;
 
 import java.awt.AlphaComposite;
+import java.awt.Canvas;
 import java.awt.Color;
 import java.awt.Dimension;
 import java.awt.Graphics;
@@ -8,6 +9,7 @@ import java.awt.Graphics2D;
 import java.awt.GraphicsConfiguration;
 import java.awt.GraphicsEnvironment;
 import java.awt.Image;
+import java.awt.MediaTracker;
 import java.awt.RenderingHints;
 import java.awt.Shape;
 import java.awt.Toolkit;
@@ -20,8 +22,10 @@ import java.awt.event.MouseMotionListener;
 import java.awt.geom.Ellipse2D;
 import java.awt.geom.Rectangle2D;
 import java.awt.image.BufferedImage;
+import java.awt.image.BufferedImageOp;
 import java.io.File;
 import java.io.IOException;
+import java.net.URL;
 import java.util.ArrayList;
 import java.util.List;
 
@@ -44,7 +48,7 @@ public class GameField extends JComponent implements ActionListener
 	private double scale;
 	private Color colorMy;
 	private Timer timer;
-	private List<Unit> list_Unit;
+	private static List<Unit> list_Unit;
 	private User secondUser;
 	private Unit selectedUnit;
 	private static int fps = 50; // Кадров в секунду
@@ -60,7 +64,7 @@ public class GameField extends JComponent implements ActionListener
 		list_Unit = new ArrayList<Unit>();
 
 		scale = 1.0;
-		timer = new Timer( 1000/fps, this );
+		timer = new Timer( 1000 / fps, this );
 		this.colorMy = colorMy;
 
 		setPreferredSize( new Dimension(700, 700) );
@@ -72,7 +76,10 @@ public class GameField extends JComponent implements ActionListener
 					public void mouseReleased( MouseEvent e ) {
 					}
 					@Override
-					public void mousePressed( MouseEvent e ) {
+					public void mousePressed( MouseEvent e )
+					{
+						System.out.println(" + DesktopChatClient::GameField::GameField() --- mousePressed()");
+
 //						GameFrame.jLabel.setText("X: " + e.getX() + ", Y: " + e.getY() );
 						Unit unit = null;
 						switch ( e.getButton() )
@@ -108,6 +115,8 @@ public class GameField extends JComponent implements ActionListener
 								// Перемещаем выделенный объект в новую точку
 								if ( selectedUnit != null && !selectedUnit.isDead() && !isUnitSelected )
 								{
+									System.out.println(" + DesktopChatClient::GameField::GameField() --- mousePressed() --- moveTo");
+
 									selectedUnit.setTargetCoordX( Double.valueOf( e.getX() ) );
 									selectedUnit.setTargetCoordY( Double.valueOf( e.getY() ) );
 
@@ -231,58 +240,11 @@ public class GameField extends JComponent implements ActionListener
 		g2d.setRenderingHint( RenderingHints.KEY_ANTIALIASING, RenderingHints.VALUE_ANTIALIAS_ON );
 		g2d.scale( scale, scale );
 
-		boolean isAllUnitsStop = true;
 		for ( Unit unit : list_Unit )
 		{
 //			System.out.println(" + DesktopChatClient::GameField::paintComponent() --- unit ID: " + unit.getId() + " --- Name: " + unit.getName() + " --- Type: " + unit.getUnitType() );
 
-			Shape shape = null;
-			g2d.setColor( unit.getColor() );
-			if ( unit.getUnitType().equals( UnitType.TANK ) )
-			{
-//				Ellipse2D ellipse2d
-				shape = new Ellipse2D.Double( unit.getCoordX() - unit.getWidth()/2, unit.getCoordY() - unit.getHeight()/2, unit.getWidth(), unit.getHeight() );
-			}
-			else if ( unit.getUnitType().equals( UnitType.BMP ) )
-			{
-//				Rectangle2D rectangle2d
-				shape = new Rectangle2D.Double( unit.getCoordX() - unit.getWidth()/2, unit.getCoordY() - unit.getHeight()/2, unit.getWidth(), unit.getHeight() );
-			}
-			else if ( unit.getUnitType().equals( UnitType.BTR ) )
-			{
-//				Rectangle2D rectangle2d
-				shape = new Rectangle2D.Double( unit.getCoordX() - unit.getWidth()/2, unit.getCoordY() - unit.getHeight()/2, unit.getWidth(), unit.getHeight() );
-			}
-
-			// Если объекту указана новая точка
-			if ( unit.isMoving() && unit.getTargetCoordX() != null && unit.getTargetCoordY() != null )
-			{
-				// Если добрался до точки назначения
-				// TODO Сделать по-другому
-				if ( unit.getTargetCoordX() < unit.getCoordX() + 5 &&
-					 unit.getTargetCoordX() > unit.getCoordX() - 5 &&
-					 unit.getTargetCoordY() < unit.getCoordY() + 5 &&
-					 unit.getTargetCoordY() > unit.getCoordY() - 5 )
-				{
-//					timerStop();
-					unit.setTargetCoordX(null);
-					unit.setTargetCoordY(null);
-					unit.setIsMoving(false);
-				}
-
-				Integer sign = 1;
-				Double XtoY = 1D;
-				if ( unit.getTargetQuarter().equals(1) || unit.getTargetQuarter().equals(3) ) { sign = -1; }
-				if ( unit.getTargetXtoY() < 1 ) { XtoY = unit.getTargetXtoY(); }
-				unit.setCoordX( unit.getCoordX() + sign * unit.getSpeed() * XtoY );
-
-				sign = 1;
-				XtoY = 1D;
-				if ( unit.getTargetQuarter().equals(1) || unit.getTargetQuarter().equals(2) ) { sign = -1; }
-				if ( unit.getTargetXtoY() > 1 ) { XtoY = 1/unit.getTargetXtoY(); }
-				unit.setCoordY( unit.getCoordY() + sign * unit.getSpeed() * XtoY );
-			}
-
+/*
 			String iconPath = "/ru/torment/icons/";
 			ImageIcon imageIcon_ListEmptyItem = createImageIcon( iconPath + "banana.gif", "");
 //			g2d.drawImage( imageIcon_ListEmptyItem.getImage(), 100, 100, null );
@@ -296,26 +258,24 @@ public class GameField extends JComponent implements ActionListener
 			graphics2d.drawImage( image, 100, 100, null );
 			graphics2d.dispose();
 			g2d.drawImage( image, 100, 100, null );
+*/
+//			BufferedImage[] array_BufferedImages = getImages("CoinAnim.png", 4, 1 );
+//			for ( BufferedImage bufferedImage : array_BufferedImages )
+//			{
+//				g2d.drawImage( array_BufferedImages[1], null, 50, 50 );
+//			}
+//			g2d.drawImage( array_BufferedImages[0], null, 50, 50 );
+//			g2d.drawImage( array_BufferedImages[1], null, 70, 50 );
+//			g2d.drawImage( array_BufferedImages[2], null, 90, 50 );
+//			g2d.drawImage( array_BufferedImages[3], null, 110, 50 );
 
-			g2d.fill( shape );
+			unit.update();
+			unit.render( g2d );
 
 			if ( unit.isDead() ) { continue; }
 
-			// Проверка досягаемости других объектов относительно текущего
-			List<Unit> list_EnemyUnits = getEnemysInKillZone( unit );
-			for ( Unit unit_Enemy : list_EnemyUnits )
-			{
-				unit_Enemy.setHealthPoints( unit_Enemy.getHealthPoints() - unit.getAttack() );
-				if ( unit_Enemy.getHealthPoints() <= 0 )
-				{
-					unit_Enemy.setIsDead(true);
-				}
-			}
-
-			if ( unit.isMoving() ) { isAllUnitsStop = false; }
+			unit.checkInteraction();
 		}
-		// Останавливаем перерисовку только в случае, когда все объекты закончили перемещение
-		if ( isAllUnitsStop ) { timerStop(); }
 	}
 
 
@@ -336,11 +296,205 @@ public class GameField extends JComponent implements ActionListener
 		}
 	}
 
+	private static final MediaTracker tracker;
+	static {
+		// dummy component
+		Canvas canvas = new Canvas();
+		
+		// create media tracker
+		tracker = new MediaTracker(canvas);
+	}
+
+	private static void waitForResource(Image image) throws Exception {
+		if (image == null) {
+			throw new NullPointerException();
+		}
+		
+		try {
+			tracker.addImage(image, 0);
+			tracker.waitForAll();
+			if ((tracker.statusID(0, true) & MediaTracker.ERRORED) != 0) {
+				throw new RuntimeException();
+			}
+		}
+		catch (Exception e) {
+			tracker.removeImage(image, 0);
+			throw e;
+		}
+	}
+
+	/**
+	 * Applying mask into image using specified masking color. Any Color in the
+	 * image that matches the masking color will be converted to transparent.
+	 * 
+	 * @param img The source image
+	 * @param keyColor Masking color
+	 * @return Masked image
+	 */
+	public static BufferedImage applyMask(Image img, Color keyColor) {
+		BufferedImage alpha = createImage(img.getWidth(null), img.getHeight(null), Transparency.BITMASK);
+		
+		Graphics2D g = alpha.createGraphics();
+		g.setComposite(AlphaComposite.Src);
+		g.drawImage(img, 0, 0, null);
+		g.dispose();
+		
+		for (int y = 0; y < alpha.getHeight(); y++) {
+			for (int x = 0; x < alpha.getWidth(); x++) {
+				int col = alpha.getRGB(x, y);
+				if (col == keyColor.getRGB()) {
+					// make transparent
+					alpha.setRGB(x, y, col & 0x00ffffff);
+				}
+			}
+		}
+		
+		return alpha;
+	}
+
+	/**
+	 * Creates blank image with specified width, height, without transparency
+	 * (opaque).
+	 * 
+	 * @param width image width
+	 * @param height image height
+	 * @return Blank image.
+	 */
+	public static BufferedImage createImage_( int width, int height )
+	{
+		return createImage(width, height, Transparency.OPAQUE);
+	}
+
+	/**
+	 * Loads and splits image from URL with specified masking color. The images
+	 * will be split by specified column and row.
+	 * 
+	 * @param url image url
+	 * @param col column
+	 * @param row row
+	 * @param keyColor masking color
+	 * @return Loaded and splitted images.
+	 */
+	public static BufferedImage[] getImages( URL url, int col, int row, Color keyColor )
+	{
+		return splitImages( getImage( url, keyColor ), col, row );
+	}
+
+	/**
+	 * Loads an image using the specified URL and masking color. This function
+	 * will wait until the image has been loaded from file. Note: Using this
+	 * function will always return a a new image loaded from file.
+	 * 
+	 * @param url image url
+	 * @param keyColor masking color
+	 * @return Loaded image.
+	 */
+	public static BufferedImage getImage(URL url, Color keyColor)
+	{
+		try {
+			Image image = Toolkit.getDefaultToolkit().getImage(url);
+			waitForResource(image);
+			
+			return applyMask(image, keyColor);
+		}
+		catch (Exception e) {
+			System.err.println("ERROR: Unable to load Image = " + url);
+			e.printStackTrace();
+			return createImage_(50, 50);
+		}
+	}
+
+	/**
+	 * Creates blank image with specified width, height, and transparency.
+	 * 
+	 * @param width image width
+	 * @param height image height
+	 * @param transparency image transparency
+	 * @return Blank image.
+	 * @see Transparency#OPAQUE
+	 * @see Transparency#BITMASK
+	 * @see Transparency#TRANSLUCENT
+	 */
+	public static BufferedImage createImage( int width, int height, int transparency )
+	{
+		return CONFIG.createCompatibleImage( width, height, transparency );
+	}
+
+	/**
+	 * Splits a single image into an array of images. The image is cut by
+	 * specified column and row.
+	 * 
+	 * @param image the source image
+	 * @param col image column
+	 * @param row image row
+	 * @return Array of images cutted by specified column and row.
+	 */
+	public static BufferedImage[] splitImages(BufferedImage image, int col, int row)
+	{
+		int total = col * row; // total returned images
+		int frame = 0; // frame counter
+		int i, j;
+		int w = image.getWidth() / col, h = image.getHeight() / row;
+		BufferedImage[] images = new BufferedImage[total];
+		
+		for (j = 0; j < row; j++) {
+			for (i = 0; i < col; i++) {
+				int transparency = image.getColorModel().getTransparency();
+				images[frame] = createImage(w, h, transparency);
+				Graphics2D g = images[frame].createGraphics();
+				g.drawImage(image, 0, 0, w, h, // destination
+				        i * w, j * h, (i + 1) * w, (j + 1) * h, // source
+				        null);
+				g.dispose();
+				
+				frame++;
+			}
+		}
+		
+		return images;
+	}
+	/**
+	 * Loads and returns image strip with specified file using masking color.
+	 * Images that have been loaded before will return immediately from cache.
+	 * 
+	 * @param imagefile the image filename to be loaded
+	 * @param col image strip column
+	 * @param row image strip row
+	 * @return Requested image.
+	 * 
+	 * @see #getImages(String, int, int, boolean)
+	 */
+	public static BufferedImage[] getImages( String imagefile, int col, int row )
+	{
+		return getImages( imagefile, col, row, true );
+	}
+	/**
+	 * Loads and returns image strip with specified file and whether using
+	 * masking color or not. Images that have been loaded before will return
+	 * immediately from cache.
+	 * 
+	 * @param imagefile the image filename to be loaded
+	 * @param col image strip column
+	 * @param row image strip row
+	 * @param useMask true, the image is using transparent color
+	 * @return Requested image.
+	 */
+	public static BufferedImage[] getImages( String imagefile, int col, int row, boolean useMask )
+	{
+		BufferedImage[] image = null;
+		if (image == null)
+		{
+			java.net.URL url = Class.class.getResource("/ru/torment/icons/CoinAnim.png");
+			image = getImages( url, col, row, Color.GRAY );
+		}
+		return image;
+	}
+
 
 	//======================================================================================
 	// Проверка досягаемости других объектов относительно текущего
 	//======================================================================================
-	private List<Unit> getEnemysInKillZone( Unit unit )
+	public static List<Unit> getEnemysInKillZone( Unit unit )
 	{
 		List<Unit> list_EnemyUnits = new ArrayList<Unit>();
 		for ( Unit unit_Enemy : list_Unit )
