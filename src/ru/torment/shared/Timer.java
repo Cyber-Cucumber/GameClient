@@ -78,20 +78,21 @@ public class Timer implements Serializable {
 	 */
 	public boolean action( long elapsedTime )
 	{
-		if (this.active)
+		if ( this.active )
 		{
 			this.currentTick += elapsedTime;
-			if (this.currentTick >= this.delay) {
+			if ( this.currentTick >= this.delay )
+			{
 				// time elapsed!
-				
+
 				// currentTick = 0;
 				// synch the current tick to make the next tick accurate
 				this.currentTick -= this.delay;
-				
+
 				return true;
 			}
 		}
-		
+
 		return false;
 	}
 	

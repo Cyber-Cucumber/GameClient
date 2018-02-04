@@ -5,13 +5,14 @@ import java.awt.Graphics2D;
 import java.awt.Shape;
 import java.awt.geom.Ellipse2D;
 import java.awt.geom.Rectangle2D;
+import java.awt.image.BufferedImage;
 import java.io.Serializable;
 import java.util.List;
 import java.util.UUID;
 
 import ru.torment.client.GameField;
 
-public class Unit extends AnimatedSprite implements Serializable
+public class Unit extends AdvanceSprite implements Serializable
 {
 	private static final long serialVersionUID = 1L;
 
@@ -37,10 +38,34 @@ public class Unit extends AnimatedSprite implements Serializable
 
 	private transient Shape shape;
 
+	private static BufferedImage[] getAllFrames( BufferedImage[] array_BufferedImage_1, BufferedImage[] array_BufferedImage_2 )
+	{
+		BufferedImage[] abi = new BufferedImage[ array_BufferedImage_1.length + array_BufferedImage_2.length ];
+		for ( int i = 0; i < array_BufferedImage_1.length - 1; i++ )
+		{
+			abi[i] = array_BufferedImage_1[i];
+		}
+		for ( int i = 0; i < array_BufferedImage_2.length - 1; i++ )
+		{
+			abi[array_BufferedImage_1.length + i] = array_BufferedImage_2[i];
+		}
+		return abi;
+	}
+
 	//======================================================================================
 	public Unit( UnitType unitType, String name, Color color, Double coordX, Double coordY, Integer width, Integer height, Integer speed )
 	{
-		super( GameField.getImages("CoinAnim.png", 4, 1 ), coordX, coordY );
+//		super( GameField.getImages("Coin.png", 3, 1 ), coordX, coordY );
+		super( getAllFrames( GameField.getImages("sc_ultralisk_l.png", 10, 16 ),
+							 GameField.getImages("sc_ultralisk_r.png", 10, 16 ) ), coordX, coordY );
+//		int[] animation = { 0, 0, 0, 0, 1, 2, 1, 0 };
+//		int[] animation = { 80, 70, 60, 50, 40, 30, 20, 10, 0 };
+		int[] animation = { 5, 15, 25, 35, 45, 55, 65, 75, 85 };
+		this.setAnimationFrame( animation );
+		this.setAnimate(true);
+		this.setLoopAnim(true);
+//		this.setAnimationTimer( new Timer(150) );
+		this.setAnimationTimer( new Timer(60) );
 
 		System.out.println(" + GameClient::Unit::Unit()");
 
@@ -75,7 +100,7 @@ public class Unit extends AnimatedSprite implements Serializable
 	}
 
 	//======================================================================================
-	public void update()
+	public void update( long elapsedTime )
 	{
 //		System.out.println(" + GameClient::Unit::update()");
 		
@@ -96,6 +121,15 @@ public class Unit extends AnimatedSprite implements Serializable
 				setIsMoving(false);
 			}
 
+			if ( getTargetQuarter().equals(1) || getTargetQuarter().equals(3) )
+			{
+				moveLeft();
+			}
+			else if ( getTargetQuarter().equals(2) || getTargetQuarter().equals(4) )
+			{
+				moveRight();
+			}
+
 			Integer sign = 1;
 			Double XtoY = 1D;
 			if ( getTargetQuarter().equals(1) || getTargetQuarter().equals(3) ) { sign = -1; }
@@ -107,8 +141,14 @@ public class Unit extends AnimatedSprite implements Serializable
 			if ( getTargetQuarter().equals(1) || getTargetQuarter().equals(2) ) { sign = -1; }
 			if ( getTargetXtoY() > 1 ) { XtoY = 1/getTargetXtoY(); }
 			setCoordY( getCoordY() + sign * getSpeed() * XtoY );
-		}		
+		}
+
+//		elapsedTime = System.currentTimeMillis() - time_old;
+//		System.out.println(" + GameClient::Unit::update() --- moveToTarget --- elapsedTime: " + elapsedTime );
+		super.update( elapsedTime );
+//		time_old = 0L;
 	}
+//	long time_old = 0L;
 
 	//======================================================================================
 	public void render( Graphics2D g2d )
@@ -128,7 +168,7 @@ public class Unit extends AnimatedSprite implements Serializable
 //		g2d.setColor( getColor() );
 //		g2d.fill( shape );
 
-		super.render( g2d, getCoordX().intValue(), getCoordY().intValue() );
+		super.render( g2d, getCoordX().intValue() - getWidth()/2, getCoordY().intValue() - getHeight()/2 );
 	}
 
 	//======================================================================================
@@ -205,6 +245,18 @@ public class Unit extends AnimatedSprite implements Serializable
 			isMoving = false;
 			healthPoints = 0;
 		}
+	}
+
+	public void moveLeft()
+	{
+		int[] animation = { 5, 15, 25, 35, 45, 55, 65, 75, 85 };
+		this.setAnimationFrame( animation );
+	}
+
+	public void moveRight()
+	{
+		int[] animation = { 165, 175, 185, 195, 205, 215, 225, 235, 245 };
+		this.setAnimationFrame( animation );
 	}
 
 	//======================================================================================

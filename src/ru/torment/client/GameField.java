@@ -3,6 +3,7 @@ package ru.torment.client;
 import java.awt.AlphaComposite;
 import java.awt.Canvas;
 import java.awt.Color;
+import java.awt.Cursor;
 import java.awt.Dimension;
 import java.awt.Graphics;
 import java.awt.Graphics2D;
@@ -10,12 +11,15 @@ import java.awt.GraphicsConfiguration;
 import java.awt.GraphicsEnvironment;
 import java.awt.Image;
 import java.awt.MediaTracker;
+import java.awt.Point;
 import java.awt.RenderingHints;
 import java.awt.Shape;
 import java.awt.Toolkit;
 import java.awt.Transparency;
 import java.awt.event.ActionEvent;
 import java.awt.event.ActionListener;
+import java.awt.event.KeyEvent;
+import java.awt.event.KeyListener;
 import java.awt.event.MouseEvent;
 import java.awt.event.MouseListener;
 import java.awt.event.MouseMotionListener;
@@ -55,11 +59,40 @@ public class GameField extends JComponent implements ActionListener
 
 	public static final GraphicsConfiguration CONFIG = GraphicsEnvironment.getLocalGraphicsEnvironment().getDefaultScreenDevice().getDefaultConfiguration();
 
+	Image baseGameMap = null;
+
+	int defaultGameFieldWidth  = 700;
+	int defaultGameFieldHeight = 700;
+
+	int baseGameMapX1 = 0;
+	int baseGameMapY1 = 0;
+	int baseGameMapX2 = defaultGameFieldWidth;
+	int baseGameMapY2 = defaultGameFieldHeight;
+
+	boolean isGameMapShift_Left  = false;
+	boolean isGameMapShift_Right = false;
+	boolean isGameMapShift_Up    = false;
+	boolean isGameMapShift_Down  = false;
+
+	int gameMapShiftValue_Normal = 20;
+	int gameMapShiftValue_Fast   = 40;
+	int gameMapShiftValue = gameMapShiftValue_Normal;
+
 	//======================================================================================
 	//======================================================================================
 	private GameField( final Color colorMy )
 	{
 		System.out.println(" + DesktopChatClient::GameField::GameField()");
+
+		java.net.URL url = Class.class.getResource("/ru/torment/icons/sc_map.jpg");
+		try
+		{
+			baseGameMap = ImageIO.read( url );
+		}
+		catch ( IOException e1 )
+		{
+			e1.printStackTrace();
+		}
 
 		list_Unit = new ArrayList<Unit>();
 
@@ -67,7 +100,7 @@ public class GameField extends JComponent implements ActionListener
 		timer = new Timer( 1000 / fps, this );
 		this.colorMy = colorMy;
 
-		setPreferredSize( new Dimension(700, 700) );
+		setPreferredSize( new Dimension( defaultGameFieldWidth, defaultGameFieldHeight ) );
 
 		addMouseListener(
 				new MouseListener()
@@ -136,7 +169,7 @@ public class GameField extends JComponent implements ActionListener
 									selectedUnit.setTargetXtoY( Double.valueOf(dX/dY) );
 
 									selectedUnit.setIsMoving(true);
-									if ( !timer.isRunning() ) { timerStart(); }
+//									if ( !timer.isRunning() ) { timerStart(); }
 								}
 								break;
 							case MouseEvent.BUTTON2:
@@ -153,7 +186,14 @@ public class GameField extends JComponent implements ActionListener
 						ChatWindow.sendMessage( new GameData( GameDataType.NEW_UNIT, StartWindow.user, "GameData", unit ) );
 					}
 					@Override
-					public void mouseExited( MouseEvent e ) {
+					public void mouseExited( MouseEvent e )
+					{
+						System.out.println(" + GameClient::GameField::GameField() --- mouseExited()");
+
+						isGameMapShift_Left  = false;
+						isGameMapShift_Right = false;
+						isGameMapShift_Up    = false;
+						isGameMapShift_Down  = false;
 					}
 					@Override
 					public void mouseEntered( MouseEvent e ) {
@@ -171,6 +211,67 @@ public class GameField extends JComponent implements ActionListener
 					{
 //						System.out.println("mouseMoved() --- X: " + e.getX() + " --- Y: " + e.getY() );
 						GameFrame.jLabel.setText("X: " + e.getX() + ", Y: " + e.getY() );
+
+						isGameMapShift_Left  = false;
+						isGameMapShift_Right = false;
+						isGameMapShift_Up    = false;
+						isGameMapShift_Down  = false;
+
+						timer_GameMapShift.start();
+
+						setCursor( Cursor.getPredefinedCursor( Cursor.DEFAULT_CURSOR ) );
+
+						// Сдвиг карты вправо
+						if ( e.getX() > getWidth() - 50 )
+						{
+							isGameMapShift_Right = true;
+							gameMapShiftValue = gameMapShiftValue_Normal;
+							GameFrame.jLabel.setText("X: " + e.getX() + ", Y: " + e.getY() + " >>");
+							Image curImage = Toolkit.getDefaultToolkit().createImage( getClass().getResource("/ru/torment/icons/check_24.png") );
+							setCursor( Toolkit.getDefaultToolkit().createCustomCursor( curImage, new Point(8,8), "CustomCursor" ) );
+							if ( e.getX() > getWidth() - 20 )  // Быстрый сдвиг
+							{
+								GameFrame.jLabel.setText("X: " + e.getX() + ", Y: " + e.getY() + " >>>>");
+								gameMapShiftValue = gameMapShiftValue_Fast;
+							}
+						}
+						// Сдвиг карты влево
+						else if ( e.getX() < 50 )
+						{
+							isGameMapShift_Left = true;
+							gameMapShiftValue = gameMapShiftValue_Normal;
+							GameFrame.jLabel.setText("X: " + e.getX() + ", Y: " + e.getY() + " <<");
+							if ( e.getX() < 20 )  // Быстрый сдвиг
+							{
+								GameFrame.jLabel.setText("X: " + e.getX() + ", Y: " + e.getY() + " <<<<");
+								gameMapShiftValue = gameMapShiftValue_Fast;
+							}
+						}
+
+						// Сдвиг карты вниз
+						if ( e.getY() > getHeight() - 50 )
+						{
+							isGameMapShift_Down = true;
+							gameMapShiftValue = gameMapShiftValue_Normal;
+							GameFrame.jLabel.setText("X: " + e.getX() + ", Y: " + e.getY() + " vv");
+							if ( e.getY() > getHeight() - 20 )  // Быстрый сдвиг
+							{
+								GameFrame.jLabel.setText("X: " + e.getX() + ", Y: " + e.getY() + " vvvv");
+								gameMapShiftValue = gameMapShiftValue_Fast;
+							}
+						}
+						// Сдвиг карты вверх
+						else if ( e.getY() < 50 )
+						{
+							isGameMapShift_Up = true;
+							gameMapShiftValue = gameMapShiftValue_Normal;
+							GameFrame.jLabel.setText("X: " + e.getX() + ", Y: " + e.getY() + " ^^");
+							if ( e.getY() < 20 )  // Быстрый сдвиг
+							{
+								GameFrame.jLabel.setText("X: " + e.getX() + ", Y: " + e.getY() + " ^^^^");
+								gameMapShiftValue = gameMapShiftValue_Fast;
+							}
+						}
 					}
 					@Override
 					public void mouseDragged( MouseEvent e )
@@ -178,6 +279,59 @@ public class GameField extends JComponent implements ActionListener
 //						System.out.println("mouseDragged");
 					}
 				});
+
+		addKeyListener(
+				new KeyListener()
+				{
+					@Override
+					public void keyTyped( KeyEvent e )
+					{
+						System.out.println(" + GameClient::GameField::GameField() --- keyTyped() --- KeyCode: " + e.getKeyCode() );
+					}
+
+					@Override
+					public void keyReleased( KeyEvent e )
+					{
+						System.out.println(" + GameClient::GameField::GameField() --- keyReleased() --- KeyCode: " + e.getKeyCode() );
+					}
+
+					@Override
+					public void keyPressed( KeyEvent e )
+					{
+						System.out.println(" + GameClient::GameField::GameField() --- keyPressed() --- KeyCode: " + e.getKeyCode() );
+					}
+				});
+
+		timerStart();
+	}
+
+	long elapsedTime = 0;
+	public void startGame()
+	{
+		System.out.println(" + GameClient::GameField::startGame()");
+
+		// start game loop!
+		// before play, clear memory (runs garbage collector)
+		System.gc();
+		System.runFinalization();
+		
+		BaseTimer bsTimer = new SystemTimer();
+		bsTimer.refresh();
+		
+		while (true)
+		{
+			System.out.println(" + GameClient::GameField::startGame() --- Looooooooooooop");
+			
+//			Graphics2D g = bsGraphics.getBackBuffer();
+			elapsedTime = bsTimer.sleep();
+			repaint();
+			
+			if ( elapsedTime > 100 )
+			{
+				// can't lower than 10 fps (1000/100)
+				elapsedTime = 100;
+			}
+		}
 	}
 
 	//======================================================================================
@@ -222,6 +376,68 @@ public class GameField extends JComponent implements ActionListener
 		repaint();
 	}
 
+	Timer timer_GameMapShift = new Timer(
+			50,
+			new ActionListener()
+			{
+				@Override
+				public void actionPerformed( ActionEvent e )
+				{
+					if ( isGameMapShift_Left )
+					{
+						if ( baseGameMapX1 <= 0 )
+						{
+							baseGameMapX1 = 0;
+							baseGameMapX2 = getWidth();
+						}
+						else
+						{
+							baseGameMapX1 -= gameMapShiftValue;
+							baseGameMapX2 -= gameMapShiftValue;
+						}
+					}
+					if ( isGameMapShift_Right )
+					{
+						if ( baseGameMapX2 >= baseGameMap.getWidth(null) )
+						{
+							baseGameMapX2 = baseGameMap.getWidth(null);
+							baseGameMapX1 = baseGameMapX2 - getWidth();
+						}
+						else
+						{
+							baseGameMapX1 += gameMapShiftValue;
+							baseGameMapX2 += gameMapShiftValue;
+						}
+					}
+					if ( isGameMapShift_Up )
+					{
+						if ( baseGameMapY1 <= 0 )
+						{
+							baseGameMapY1 = 0;
+							baseGameMapY2 = getHeight();
+						}
+						else
+						{
+							baseGameMapY1 -= gameMapShiftValue;
+							baseGameMapY2 -= gameMapShiftValue;
+						}
+					}
+					if ( isGameMapShift_Down )
+					{
+						if ( baseGameMapY2 >= baseGameMap.getHeight(null) )
+						{
+							baseGameMapY2 = baseGameMap.getHeight(null);
+							baseGameMapY1 = baseGameMapY2 - getHeight();
+						}
+						else
+						{
+							baseGameMapY1 += gameMapShiftValue;
+							baseGameMapY2 += gameMapShiftValue;
+						}
+					}
+				}
+			});
+
 	//======================================================================================
 	//======================================================================================
 	@Override
@@ -230,12 +446,14 @@ public class GameField extends JComponent implements ActionListener
 //		System.out.println(" + DesktopChatClient::GameField::paintComponent()");
 
 		Graphics2D g2d = (Graphics2D) g;
-		g2d.setColor( Color.white );
-		int width = getWidth();
-		int height = getHeight();
-		g.fillRect(0, 0, width, height);
-		g2d.setColor( Color.black );
-		g2d.drawRect( 0, 0, width - 1, height - 1 );
+//		g2d.setColor( Color.white );
+//		int width = getWidth();
+//		int height = getHeight();
+//		g.fillRect(0, 0, width, height);
+//		g2d.setColor( Color.black );
+//		g2d.drawRect( 0, 0, width - 1, height - 1 );
+
+		g2d.drawImage( baseGameMap, 0, 0, getWidth(), getHeight(), baseGameMapX1, baseGameMapY1, baseGameMapX2, baseGameMapY2, null );
 
 		g2d.setRenderingHint( RenderingHints.KEY_ANTIALIASING, RenderingHints.VALUE_ANTIALIAS_ON );
 		g2d.scale( scale, scale );
@@ -269,7 +487,7 @@ public class GameField extends JComponent implements ActionListener
 //			g2d.drawImage( array_BufferedImages[2], null, 90, 50 );
 //			g2d.drawImage( array_BufferedImages[3], null, 110, 50 );
 
-			unit.update();
+			unit.update( 20 );//elapsedTime );
 			unit.render( g2d );
 
 			if ( unit.isDead() ) { continue; }
@@ -442,9 +660,9 @@ public class GameField extends JComponent implements ActionListener
 				int transparency = image.getColorModel().getTransparency();
 				images[frame] = createImage(w, h, transparency);
 				Graphics2D g = images[frame].createGraphics();
-				g.drawImage(image, 0, 0, w, h, // destination
+				g.drawImage( image, 0, 0, w, h, // destination
 				        i * w, j * h, (i + 1) * w, (j + 1) * h, // source
-				        null);
+				        null );
 				g.dispose();
 				
 				frame++;
@@ -484,7 +702,7 @@ public class GameField extends JComponent implements ActionListener
 		BufferedImage[] image = null;
 		if (image == null)
 		{
-			java.net.URL url = Class.class.getResource("/ru/torment/icons/CoinAnim.png");
+			java.net.URL url = Class.class.getResource("/ru/torment/icons/" + imagefile );
 			image = getImages( url, col, row, Color.GRAY );
 		}
 		return image;
