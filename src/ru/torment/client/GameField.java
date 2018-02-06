@@ -38,8 +38,11 @@ import javax.swing.ImageIcon;
 import javax.swing.JComponent;
 import javax.swing.Timer;
 
+import ru.torment.shared.Coin;
 import ru.torment.shared.GameData;
 import ru.torment.shared.GameDataType;
+import ru.torment.shared.TargetQuarter;
+import ru.torment.shared.Ultralisk;
 import ru.torment.shared.Unit;
 import ru.torment.shared.UnitType;
 import ru.torment.shared.User;
@@ -153,30 +156,37 @@ public class GameField extends JComponent implements ActionListener
 									selectedUnit.setTargetCoordX( Double.valueOf( e.getX() ) );
 									selectedUnit.setTargetCoordY( Double.valueOf( e.getY() ) );
 
-									if ( selectedUnit.getCoordX() < selectedUnit.getTargetCoordX() )
+									// Определяем в какой четверти координатной плоскости находится точка назначения (относительно объекта)
+									if ( selectedUnit.getCoordX() < selectedUnit.getTargetCoordX() )  // Точка назначения справа (I или IV четверть)
 									{
-										if ( selectedUnit.getCoordY() < selectedUnit.getTargetCoordY() ) { selectedUnit.setTargetQuarter(4); }
-										else { selectedUnit.setTargetQuarter(2); }
+										if      ( selectedUnit.getCoordY() < selectedUnit.getTargetCoordY() ) { selectedUnit.setTargetQuarter( TargetQuarter.IV_Quarter      ); }
+										else if ( selectedUnit.getCoordY() > selectedUnit.getTargetCoordY() ) { selectedUnit.setTargetQuarter( TargetQuarter.I_Quarter       ); }
+										else                                                                  { selectedUnit.setTargetQuarter( TargetQuarter.On_Y_Axis_Right ); }
 									}
-									else
+									else if ( selectedUnit.getCoordX() > selectedUnit.getTargetCoordX() )  // Точка назначения слева (II или III четверть)
 									{
-										if ( selectedUnit.getCoordY() < selectedUnit.getTargetCoordY() ) { selectedUnit.setTargetQuarter(3); }
-										else { selectedUnit.setTargetQuarter(1); }
+										if      ( selectedUnit.getCoordY() < selectedUnit.getTargetCoordY() ) { selectedUnit.setTargetQuarter( TargetQuarter.III_Quarter    ); }
+										else if ( selectedUnit.getCoordY() > selectedUnit.getTargetCoordY() ) { selectedUnit.setTargetQuarter( TargetQuarter.II_Quarter     ); }
+										else                                                                  { selectedUnit.setTargetQuarter( TargetQuarter.On_Y_Axis_Left ); }
+									}
+									else  // Точка назначения на оси X
+									{
+										if ( selectedUnit.getCoordY() < selectedUnit.getTargetCoordY() ) { selectedUnit.setTargetQuarter( TargetQuarter.On_X_Axis_Down ); }
+										else                                                             { selectedUnit.setTargetQuarter( TargetQuarter.On_X_Axis_Up   ); }
 									}
 
 									Double dX = Math.abs( selectedUnit.getCoordX() - selectedUnit.getTargetCoordX() );
 									Double dY = Math.abs( selectedUnit.getCoordY() - selectedUnit.getTargetCoordY() );
-									selectedUnit.setTargetXtoY( Double.valueOf(dX/dY) );
+									selectedUnit.setTargetYtoX( Double.valueOf(dY/dX) );
 
 									selectedUnit.setIsMoving(true);
-//									if ( !timer.isRunning() ) { timerStart(); }
 								}
 								break;
 							case MouseEvent.BUTTON2:
-								unit = new Unit( UnitType.BMP, "Ball BMP", GameField.this.colorMy, Double.valueOf( e.getX() ), Double.valueOf( e.getY() ), 20, 10, 3 );
+								unit = new Ultralisk( UnitType.BMP, "Ball BMP", GameField.this.colorMy, Double.valueOf( e.getX() ), Double.valueOf( e.getY() ), 20, 10, 3 );
 								break;
 							case MouseEvent.BUTTON3:
-								unit = new Unit( UnitType.BTR, "Ball BTR", GameField.this.colorMy, Double.valueOf( e.getX() ), Double.valueOf( e.getY() ), 20, 20, 4 );
+								unit = new Coin( UnitType.BTR, "Ball BTR", GameField.this.colorMy, Double.valueOf( e.getX() ), Double.valueOf( e.getY() ), 20, 20, 4 );
 								break;
 							default:
 								break;

@@ -12,6 +12,7 @@ import javax.swing.JFrame;
 import javax.swing.JLabel;
 import javax.swing.JPanel;
 
+import ru.torment.shared.Ultralisk;
 import ru.torment.shared.Unit;
 import ru.torment.shared.UnitType;
 
@@ -25,7 +26,7 @@ public class GameFrame
 //		windowedMode = new WindowedMode( new Dimension(1000, 750), true );
 //		startGame();
 
-		GameField gameField = GameField.getInstance();
+		final GameField gameField = GameField.getInstance();
 			gameField.setColorMy( Color.RED );
 
 		JFrame jFrame = new JFrame("Game");
@@ -72,7 +73,7 @@ public class GameFrame
 		BaseTimer bsTimer = new SystemTimer();
 		bsTimer.refresh();
 
-		Unit unit = new Unit( UnitType.BMP, "Ball BMP", Color.BLUE, 100D, 100D, 20, 10, 3 );
+		Unit unit = new Ultralisk( UnitType.BMP, "Ball BMP", Color.BLUE, 100D, 100D, 20, 10, 3 );
 
 		while (true)
 		{
