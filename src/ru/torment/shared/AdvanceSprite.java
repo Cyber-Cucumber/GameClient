@@ -121,7 +121,7 @@ public class AdvanceSprite extends AnimatedSprite {
 	 * 
 	 * @see #setAnimationFrame(int, int)
 	 */
-	public void setAnimationFrame(int[] animation)
+	public void setAnimationFrame(int... animation)
 	{
 		if (this.animationFrame != animation)
 		{

@@ -2,6 +2,7 @@ package ru.torment.shared;
 
 import java.awt.Color;
 import java.awt.image.BufferedImage;
+import java.util.HashMap;
 
 import ru.torment.client.GameField;
 import ru.torment.client.Util;

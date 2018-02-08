@@ -73,7 +73,7 @@ public class GameFrame
 		BaseTimer bsTimer = new SystemTimer();
 		bsTimer.refresh();
 
-		Unit unit = new Ultralisk( UnitType.BMP, "Ball BMP", Color.BLUE, 100D, 100D, 20, 10, 3 );
+		Unit unit = new Ultralisk( UnitType.BMP, "Ball BMP", Color.BLUE, 100D, 100D, 3 );
 
 		while (true)
 		{

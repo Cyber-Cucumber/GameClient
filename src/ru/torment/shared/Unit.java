@@ -7,7 +7,9 @@ import java.awt.geom.Ellipse2D;
 import java.awt.geom.Rectangle2D;
 import java.awt.image.BufferedImage;
 import java.io.Serializable;
+import java.util.HashMap;
 import java.util.List;
+import java.util.Map;
 import java.util.UUID;
 
 import ru.torment.client.GameField;
@@ -38,6 +40,7 @@ public class Unit extends AdvanceSprite implements Serializable
 	private Boolean  isDead;
 
 	private transient Shape shape;
+	transient Map< MovingDirection, int[] > map_MovingDirectionAnimation;
 
 	//======================================================================================
 	public Unit( BufferedImage[] bufferedImages, UnitType unitType, String name, Color color, Double coordX, Double coordY, Integer width, Integer height, Integer speed )
@@ -62,6 +65,7 @@ public class Unit extends AdvanceSprite implements Serializable
 		isMoving = false;
 		isDead = false;
 
+		shape = new Ellipse2D.Double( getCoordX() - getWidth()/2, getCoordY() - getHeight()/4, getWidth(), getHeight()/2 );
 //		if ( getUnitType().equals( UnitType.TANK ) )
 //		{
 //			shape = new Ellipse2D.Double( getCoordX() - getWidth()/2, getCoordY() - getHeight()/2, getWidth(), getHeight() );
@@ -96,9 +100,20 @@ public class Unit extends AdvanceSprite implements Serializable
 				setTargetCoordX(null);
 				setTargetCoordY(null);
 				setIsMoving(false);
+				this.setAnimationFrame( getAnimationFrame()[0] );  // Когда объект останавливается выставляем первый фрэйм анимации
+				return;
 			}
 
-			setMoveAnimation();
+			//-----------------------------------------------------------------------------------------------
+			// Устанавливаем анимацию перемещения объекта в зависимости от положения точки назначения
+			//-----------------------------------------------------------------------------------------------
+			if ( map_MovingDirectionAnimation != null )
+			{
+				MovingDirection movingDirection = Util.getMovingDirection( getTargetQuarter(), getTargetYtoX() );
+				int[] animation = map_MovingDirectionAnimation.get( movingDirection );
+				this.setAnimationFrame( animation );
+			}
+			//-----------------------------------------------------------------------------------------------
 
 			Integer sign = 1;
 			Double YtoX = 1D;
@@ -139,9 +154,11 @@ public class Unit extends AdvanceSprite implements Serializable
 //			Ellipse2D ellipse2d = (Ellipse2D)shape;
 //			ellipse2d.setFrame( getCoordX() - getWidth()/2, getCoordY() - getHeight()/2, getWidth(), getHeight() );
 //		}
-//		g2d.setColor( getColor() );
+		Ellipse2D ellipse2d = (Ellipse2D)shape;
+		ellipse2d.setFrame( getCoordX() - getWidth()/2, getCoordY() - getHeight()/4, getWidth(), getHeight()/2 );
+		g2d.setColor( getColor() );
 //		g2d.fill( shape );
-
+		g2d.draw( shape );
 		super.render( g2d, getCoordX().intValue() - getWidth()/2, getCoordY().intValue() - getHeight()/2 );
 	}
 
@@ -219,60 +236,6 @@ public class Unit extends AdvanceSprite implements Serializable
 			isMoving = false;
 			healthPoints = 0;
 		}
-	}
-
-	//======================================================================================
-	// Устанавливаем анимацию перемещения объекта в зависимости от положения точки назначения
-	//======================================================================================
-	private void setMoveAnimation()
-	{
-		System.out.println(" + GameClient::Unit::setMoveAnimation()");
-		System.out.println(" + GameClient::Unit::setMoveAnimation() --- YtoX: " + getTargetYtoX() );
-
-		int[] animation = new int[9];
-		MovingDirection movingDirection;
-
-		if ( getTargetQuarter().equals( TargetQuarter.II_Quarter ) )
-		{
-			System.out.println(" + GameClient::Unit::setMoveAnimation() --- II_Quarter" );
-			if      ( getTargetYtoX() > 0                                  && getTargetYtoX() < Math.tan( Math.toRadians(11.25) ) ) { movingDirection = MovingDirection.LEFT; animation = new int[]{ 5, 15, 25, 35, 45, 55, 65, 75, 85 }; }
-			else if ( getTargetYtoX() >= Math.tan( Math.toRadians(11.25) ) && getTargetYtoX() < Math.tan( Math.toRadians(33.75) ) ) { animation = new int[]{ 6, 16, 26, 36, 46, 56, 66, 76, 86 }; }
-			else if ( getTargetYtoX() >= Math.tan( Math.toRadians(33.75) ) && getTargetYtoX() < Math.tan( Math.toRadians(56.25) ) ) { animation = new int[]{ 7, 17, 27, 37, 47, 57, 67, 77, 87 }; }
-			else if ( getTargetYtoX() >= Math.tan( Math.toRadians(56.25) ) && getTargetYtoX() < Math.tan( Math.toRadians(78.75) ) ) { animation = new int[]{ 8, 18, 28, 38, 48, 58, 68, 78, 88 }; }
-			else if ( getTargetYtoX() >= Math.tan( Math.toRadians(78.75) ) && getTargetYtoX() < Math.tan( Math.toRadians( 90 - Double.MIN_VALUE ) ) ) { animation = new int[]{ 9, 19, 29, 39, 49, 59, 69, 79, 89 }; }
-		}
-		else if ( getTargetQuarter().equals( TargetQuarter.I_Quarter ) )
-		{
-			double addition = 90D;
-			System.out.println(" + GameClient::Unit::setMoveAnimation() --- I_Quarter " + Math.tan( Math.toRadians( addition + Double.MIN_VALUE ) ) );
-			if      ( -getTargetYtoX() >= Math.tan( Math.toRadians( addition + Double.MIN_VALUE ) ) && -getTargetYtoX() < Math.tan( Math.toRadians( addition + 11.25 ) ) ) { animation = new int[]{ 160, 170, 180, 190, 200, 210, 220, 230, 240 }; }
-			else if ( -getTargetYtoX() >= Math.tan( Math.toRadians( addition + 11.25 ) ) && -getTargetYtoX() < Math.tan( Math.toRadians( addition + 33.75 ) ) ) { animation = new int[]{ 161, 171, 181, 191, 201, 211, 221, 231, 241 }; }
-			else if ( -getTargetYtoX() >= Math.tan( Math.toRadians( addition + 33.75 ) ) && -getTargetYtoX() < Math.tan( Math.toRadians( addition + 56.25 ) ) ) { animation = new int[]{ 162, 172, 182, 192, 202, 212, 222, 232, 242 }; }
-			else if ( -getTargetYtoX() >= Math.tan( Math.toRadians( addition + 56.25 ) ) && -getTargetYtoX() < Math.tan( Math.toRadians( addition + 78.75 ) ) ) { animation = new int[]{ 163, 173, 183, 193, 203, 213, 223, 233, 243 }; }
-			else if ( -getTargetYtoX() >= Math.tan( Math.toRadians( addition + 78.75 ) ) && -getTargetYtoX() < Math.tan( Math.toRadians( addition + 90 - Double.MIN_VALUE ) ) ) { animation = new int[]{ 163, 174, 184, 194, 204, 214, 224, 234, 244 }; }
-		}
-		else if ( getTargetQuarter().equals( TargetQuarter.IV_Quarter ) )
-		{
-			double addition = 180D;
-			System.out.println(" + GameClient::Unit::setMoveAnimation() --- IV_Quarter" );
-			if      ( getTargetYtoX() >= Math.tan( Math.toRadians( addition + Double.MIN_VALUE ) ) && getTargetYtoX() < Math.tan( Math.toRadians( addition + 11.25 ) ) ) { animation = new int[]{ 165, 175, 185, 195, 205, 215, 225, 235, 245 }; }
-			else if ( getTargetYtoX() >= Math.tan( Math.toRadians( addition + 11.25 ) ) && getTargetYtoX() < Math.tan( Math.toRadians( addition + 33.75 ) ) ) { animation = new int[]{ 166, 176, 186, 196, 206, 216, 226, 236, 246 }; }
-			else if ( getTargetYtoX() >= Math.tan( Math.toRadians( addition + 33.75 ) ) && getTargetYtoX() < Math.tan( Math.toRadians( addition + 56.25 ) ) ) { animation = new int[]{ 167, 177, 187, 197, 207, 217, 227, 237, 247 }; }
-			else if ( getTargetYtoX() >= Math.tan( Math.toRadians( addition + 56.25 ) ) && getTargetYtoX() < Math.tan( Math.toRadians( addition + 78.75 ) ) ) { animation = new int[]{ 168, 178, 188, 198, 208, 218, 228, 238, 248 }; }
-			else if ( getTargetYtoX() >= Math.tan( Math.toRadians( addition + 78.75 ) ) && getTargetYtoX() < Math.tan( Math.toRadians( addition + 90 - Double.MIN_VALUE ) ) ) { animation = new int[]{ 169, 179, 189, 199, 209, 219, 229, 239, 249 }; }
-		}
-		else if ( getTargetQuarter().equals( TargetQuarter.III_Quarter ) )
-		{
-			double addition = 270D;
-			System.out.println(" + GameClient::Unit::setMoveAnimation() --- III_Quarter" );
-			if      ( -getTargetYtoX() >= Math.tan( Math.toRadians( addition + Double.MIN_VALUE ) ) && -getTargetYtoX() < Math.tan( Math.toRadians( addition + 11.25 ) ) ) { animation = new int[]{ 0, 10, 20, 30, 40, 50, 60, 70, 80 }; }
-			else if ( -getTargetYtoX() >= Math.tan( Math.toRadians( addition + 11.25 ) ) && -getTargetYtoX() < Math.tan( Math.toRadians( addition + 33.75 ) ) ) { animation = new int[]{ 1, 11, 21, 31, 41, 51, 61, 71, 81 }; }
-			else if ( -getTargetYtoX() >= Math.tan( Math.toRadians( addition + 33.75 ) ) && -getTargetYtoX() < Math.tan( Math.toRadians( addition + 56.25 ) ) ) { animation = new int[]{ 2, 12, 22, 32, 42, 52, 62, 72, 82 }; }
-			else if ( -getTargetYtoX() >= Math.tan( Math.toRadians( addition + 56.25 ) ) && -getTargetYtoX() < Math.tan( Math.toRadians( addition + 78.75 ) ) ) { animation = new int[]{ 3, 13, 23, 33, 43, 53, 63, 73, 83 }; }
-			else if ( -getTargetYtoX() >= Math.tan( Math.toRadians( addition + 78.75 ) ) && -getTargetYtoX() < Math.tan( Math.toRadians( addition + 90 - Double.MIN_VALUE ) ) ) { animation = new int[]{ 4, 14, 24, 34, 44, 54, 64, 74, 84 }; }
-		}
-
-		this.setAnimationFrame( animation );
 	}
 	
 	//======================================================================================

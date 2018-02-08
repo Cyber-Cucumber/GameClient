@@ -183,10 +183,10 @@ public class GameField extends JComponent implements ActionListener
 								}
 								break;
 							case MouseEvent.BUTTON2:
-								unit = new Ultralisk( UnitType.BMP, "Ball BMP", GameField.this.colorMy, Double.valueOf( e.getX() ), Double.valueOf( e.getY() ), 20, 10, 3 );
+								unit = new Coin( UnitType.BTR, "Ball BTR", GameField.this.colorMy, Double.valueOf( e.getX() ), Double.valueOf( e.getY() ), 20, 20, 4 );
 								break;
 							case MouseEvent.BUTTON3:
-								unit = new Coin( UnitType.BTR, "Ball BTR", GameField.this.colorMy, Double.valueOf( e.getX() ), Double.valueOf( e.getY() ), 20, 20, 4 );
+								unit = new Ultralisk( UnitType.BMP, "Ball BMP", GameField.this.colorMy, Double.valueOf( e.getX() ), Double.valueOf( e.getY() ), 3 );
 								break;
 							default:
 								break;
@@ -492,10 +492,6 @@ public class GameField extends JComponent implements ActionListener
 //			{
 //				g2d.drawImage( array_BufferedImages[1], null, 50, 50 );
 //			}
-//			g2d.drawImage( array_BufferedImages[0], null, 50, 50 );
-//			g2d.drawImage( array_BufferedImages[1], null, 70, 50 );
-//			g2d.drawImage( array_BufferedImages[2], null, 90, 50 );
-//			g2d.drawImage( array_BufferedImages[3], null, 110, 50 );
 
 			unit.update( 20 );//elapsedTime );
 			unit.render( g2d );
