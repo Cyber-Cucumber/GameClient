@@ -202,7 +202,9 @@ public class AnimatedSprite extends Sprite {
 	/**
 	 * Returns image of specified frame.
 	 */
-	public BufferedImage getImage(int i) {
+	public BufferedImage getImage(int i)
+	{
+//		System.out.println(" + GameClient::AnimatedSprite::getImage() --- i: " + i + " --- image.length: " + image.length );
 		return this.image[i];
 	}
 	
@@ -262,11 +264,12 @@ public class AnimatedSprite extends Sprite {
 	 * Note: If the <code>start</code> and <code>finish</code> frame is same
 	 * with current animation frame, no action is taken.
 	 */
-	public void setAnimationFrame(int start, int finish) {
-		if (start == this.startFrame && finish == this.finishFrame) {
-			return;
-		}
-		
+	public void setAnimationFrame( int start, int finish )
+	{
+//		System.out.println(" + GameClient::AnimatedSprite::setAnimationFrame() --- start: " + start + " --- finish: " + finish );
+
+		if ( start == this.startFrame && finish == this.finishFrame ) {	return; }
+
 		this.animationTimer.refresh();
 		
 		this.startFrame = start;
@@ -322,7 +325,12 @@ public class AnimatedSprite extends Sprite {
 		{
 			this.frame = this.startFrame;
 
-			if ( !this.loopAnim ) { this.animate = false; }
+			if ( !this.loopAnim )
+			{
+//				System.out.println(" + GameClient::AnimatedSprite::updateAnimation() --- finishFrame: " + this.finishFrame );
+				this.animate = false;
+				this.frame = this.finishFrame;
+			}
 		}
 	}
 

@@ -108,7 +108,7 @@ public class AdvanceSprite extends AnimatedSprite {
 	/** ************************************************************************* */
 	/** ************************ SETTING ANIMATION ****************************** */
 	/** ************************************************************************* */
-	
+
 	/**
 	 * Sets sprite animation frame to specified animation array. The sprite will
 	 * be animated according to the animation array.
@@ -121,15 +121,15 @@ public class AdvanceSprite extends AnimatedSprite {
 	 * 
 	 * @see #setAnimationFrame(int, int)
 	 */
-	public void setAnimationFrame(int... animation)
+	public void setAnimationFrame( int... animation )
 	{
-		if (this.animationFrame != animation)
+		if ( this.animationFrame != animation )
 		{
 			this.animationFrame = animation;
-			this.setAnimationFrame( 0, (this.animationFrame != null) ? (this.animationFrame.length - 1) : (this.getImages().length - 1));
+			this.setAnimationFrame( 0, (this.animationFrame != null) ? (this.animationFrame.length - 1) : (this.getImages().length - 1) );
 		}
 	}
-	
+
 	/**
 	 * Returns sprite animation frame or null if the sprite use standard
 	 * animation frame.

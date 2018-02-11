@@ -41,6 +41,7 @@ import javax.swing.Timer;
 import ru.torment.shared.Coin;
 import ru.torment.shared.GameData;
 import ru.torment.shared.GameDataType;
+import ru.torment.shared.Owner;
 import ru.torment.shared.TargetQuarter;
 import ru.torment.shared.Ultralisk;
 import ru.torment.shared.Unit;
@@ -56,48 +57,29 @@ public class GameField extends JComponent implements ActionListener
 	private Color colorMy;
 	private Timer timer;
 	private static List<Unit> list_Unit;
+	private static List<Unit> list_DeadUnit;
 	private User secondUser;
 	private Unit selectedUnit;
 	private static int fps = 50; // Кадров в секунду
 
 	public static final GraphicsConfiguration CONFIG = GraphicsEnvironment.getLocalGraphicsEnvironment().getDefaultScreenDevice().getDefaultConfiguration();
 
-	Image baseGameMap = null;
+	static int defaultGameFieldWidth  = 1200;
+	static int defaultGameFieldHeight = 800;
 
-	int defaultGameFieldWidth  = 700;
-	int defaultGameFieldHeight = 700;
+	GameMap gameMap;
 
-	int baseGameMapX1 = 0;
-	int baseGameMapY1 = 0;
-	int baseGameMapX2 = defaultGameFieldWidth;
-	int baseGameMapY2 = defaultGameFieldHeight;
-
-	boolean isGameMapShift_Left  = false;
-	boolean isGameMapShift_Right = false;
-	boolean isGameMapShift_Up    = false;
-	boolean isGameMapShift_Down  = false;
-
-	int gameMapShiftValue_Normal = 20;
-	int gameMapShiftValue_Fast   = 40;
-	int gameMapShiftValue = gameMapShiftValue_Normal;
 
 	//======================================================================================
 	//======================================================================================
 	private GameField( final Color colorMy )
 	{
-		System.out.println(" + DesktopChatClient::GameField::GameField()");
+		System.out.println(" + GameClient::GameField::GameField()");
 
-		java.net.URL url = Class.class.getResource("/ru/torment/icons/sc_map.jpg");
-		try
-		{
-			baseGameMap = ImageIO.read( url );
-		}
-		catch ( IOException e1 )
-		{
-			e1.printStackTrace();
-		}
+		gameMap = new GameMap( this );
 
-		list_Unit = new ArrayList<Unit>();
+		list_Unit     = new ArrayList<Unit>();
+		list_DeadUnit = new ArrayList<Unit>();
 
 		scale = 1.0;
 		timer = new Timer( 1000 / fps, this );
@@ -114,10 +96,10 @@ public class GameField extends JComponent implements ActionListener
 					@Override
 					public void mousePressed( MouseEvent e )
 					{
-						System.out.println(" + DesktopChatClient::GameField::GameField() --- mousePressed()");
+						System.out.println(" + GameClient::GameField::GameField() --- mousePressed()");
 
 //						GameFrame.jLabel.setText("X: " + e.getX() + ", Y: " + e.getY() );
-						Unit unit = null;
+						Unit unit_New = null;
 						switch ( e.getButton() )
 						{
 							case MouseEvent.BUTTON1:
@@ -125,12 +107,12 @@ public class GameField extends JComponent implements ActionListener
 
 								Boolean isUnitSelected = false;
 								// Выделение объекта
-								for ( Unit unit_ : list_Unit )
+								for ( Unit unit : list_Unit )
 								{
-									if ( unit_.isDead() ) { continue; }
+									if ( unit.isDead() ) { continue; }
 
-									if ( e.getX() > unit_.getCoordX() - unit_.getWidth()/2  && e.getX() < unit_.getCoordX() + unit_.getWidth()/2 &&
-										 e.getY() > unit_.getCoordY() - unit_.getHeight()/2 && e.getY() < unit_.getCoordY() + unit_.getHeight()/2 )
+									if ( e.getX() > unit.getCoordX() - unit.getWidth()/2  && e.getX() < unit.getCoordX() + unit.getWidth()/2 &&
+										 e.getY() > unit.getCoordY() - unit.getHeight()/2 && e.getY() < unit.getCoordY() + unit.getHeight()/2 )
 									{
 										// Снимаем выделение с ранее выделенного объекта
 										if ( selectedUnit != null && !selectedUnit.isDead() )
@@ -140,70 +122,47 @@ public class GameField extends JComponent implements ActionListener
 										}
 
 										isUnitSelected = true;
-										unit_.setIsSelected(true);
-										unit_.setColor( Color.BLUE );
-										selectedUnit = unit_;
+										unit.setIsSelected(true);
+										unit.setColor( Color.BLUE );
+										selectedUnit = unit;
 										repaint();
+										GameFrame.jTextArea.setText( unit.getInfo() );
 										break;
 									}
 								}
 
 								// Перемещаем выделенный объект в новую точку
-								if ( selectedUnit != null && !selectedUnit.isDead() && !isUnitSelected )
+								if ( selectedUnit != null && !isUnitSelected )
 								{
-									System.out.println(" + DesktopChatClient::GameField::GameField() --- mousePressed() --- moveTo");
-
-									selectedUnit.setTargetCoordX( Double.valueOf( e.getX() ) );
-									selectedUnit.setTargetCoordY( Double.valueOf( e.getY() ) );
-
-									// Определяем в какой четверти координатной плоскости находится точка назначения (относительно объекта)
-									if ( selectedUnit.getCoordX() < selectedUnit.getTargetCoordX() )  // Точка назначения справа (I или IV четверть)
-									{
-										if      ( selectedUnit.getCoordY() < selectedUnit.getTargetCoordY() ) { selectedUnit.setTargetQuarter( TargetQuarter.IV_Quarter      ); }
-										else if ( selectedUnit.getCoordY() > selectedUnit.getTargetCoordY() ) { selectedUnit.setTargetQuarter( TargetQuarter.I_Quarter       ); }
-										else                                                                  { selectedUnit.setTargetQuarter( TargetQuarter.On_Y_Axis_Right ); }
-									}
-									else if ( selectedUnit.getCoordX() > selectedUnit.getTargetCoordX() )  // Точка назначения слева (II или III четверть)
-									{
-										if      ( selectedUnit.getCoordY() < selectedUnit.getTargetCoordY() ) { selectedUnit.setTargetQuarter( TargetQuarter.III_Quarter    ); }
-										else if ( selectedUnit.getCoordY() > selectedUnit.getTargetCoordY() ) { selectedUnit.setTargetQuarter( TargetQuarter.II_Quarter     ); }
-										else                                                                  { selectedUnit.setTargetQuarter( TargetQuarter.On_Y_Axis_Left ); }
-									}
-									else  // Точка назначения на оси X
-									{
-										if ( selectedUnit.getCoordY() < selectedUnit.getTargetCoordY() ) { selectedUnit.setTargetQuarter( TargetQuarter.On_X_Axis_Down ); }
-										else                                                             { selectedUnit.setTargetQuarter( TargetQuarter.On_X_Axis_Up   ); }
-									}
-
-									Double dX = Math.abs( selectedUnit.getCoordX() - selectedUnit.getTargetCoordX() );
-									Double dY = Math.abs( selectedUnit.getCoordY() - selectedUnit.getTargetCoordY() );
-									selectedUnit.setTargetYtoX( Double.valueOf(dY/dX) );
-
-									selectedUnit.setIsMoving(true);
+									selectedUnit.moveUnit( e.getX(), e.getY() );
 								}
+
 								break;
 							case MouseEvent.BUTTON2:
-								unit = new Coin( UnitType.BTR, "Ball BTR", GameField.this.colorMy, Double.valueOf( e.getX() ), Double.valueOf( e.getY() ), 20, 20, 4 );
+//								unit_New = new Coin( UnitType.BTR, "Ball BTR", GameField.this.colorMy, Double.valueOf( e.getX() ), Double.valueOf( e.getY() ), 20, 20, 4 );
+								unit_New = new Ultralisk( GameField.this.colorMy, Double.valueOf( e.getX() ), Double.valueOf( e.getY() ), 3 );
+								unit_New.setOwner( Owner.COMP );
+								unit_New.setIsFriend(false);
 								break;
 							case MouseEvent.BUTTON3:
-								unit = new Ultralisk( UnitType.BMP, "Ball BMP", GameField.this.colorMy, Double.valueOf( e.getX() ), Double.valueOf( e.getY() ), 3 );
+								unit_New = new Ultralisk( GameField.this.colorMy, Double.valueOf( e.getX() ), Double.valueOf( e.getY() ), 3 );
 								break;
 							default:
 								break;
 						}
-						if ( unit == null ) { return; }
-						addUnit( unit );
-						ChatWindow.sendMessage( new GameData( GameDataType.NEW_UNIT, StartWindow.user, "GameData", unit ) );
+						if ( unit_New == null ) { return; }
+						addUnit( unit_New );
+						ChatWindow.sendMessage( new GameData( GameDataType.NEW_UNIT, StartWindow.user, "GameData", unit_New ) );
 					}
 					@Override
 					public void mouseExited( MouseEvent e )
 					{
 						System.out.println(" + GameClient::GameField::GameField() --- mouseExited()");
 
-						isGameMapShift_Left  = false;
-						isGameMapShift_Right = false;
-						isGameMapShift_Up    = false;
-						isGameMapShift_Down  = false;
+						gameMap.isGameMapShift_Left  = false;
+						gameMap.isGameMapShift_Right = false;
+						gameMap.isGameMapShift_Up    = false;
+						gameMap.isGameMapShift_Down  = false;
 					}
 					@Override
 					public void mouseEntered( MouseEvent e ) {
@@ -222,64 +181,64 @@ public class GameField extends JComponent implements ActionListener
 //						System.out.println("mouseMoved() --- X: " + e.getX() + " --- Y: " + e.getY() );
 						GameFrame.jLabel.setText("X: " + e.getX() + ", Y: " + e.getY() );
 
-						isGameMapShift_Left  = false;
-						isGameMapShift_Right = false;
-						isGameMapShift_Up    = false;
-						isGameMapShift_Down  = false;
+						gameMap.isGameMapShift_Left  = false;
+						gameMap.isGameMapShift_Right = false;
+						gameMap.isGameMapShift_Up    = false;
+						gameMap.isGameMapShift_Down  = false;
 
-						timer_GameMapShift.start();
+						gameMap.timer_GameMapShift.start();
 
 						setCursor( Cursor.getPredefinedCursor( Cursor.DEFAULT_CURSOR ) );
 
 						// Сдвиг карты вправо
 						if ( e.getX() > getWidth() - 50 )
 						{
-							isGameMapShift_Right = true;
-							gameMapShiftValue = gameMapShiftValue_Normal;
+							gameMap.isGameMapShift_Right = true;
+							gameMap.gameMapShiftValue = gameMap.gameMapShiftValue_Normal;
 							GameFrame.jLabel.setText("X: " + e.getX() + ", Y: " + e.getY() + " >>");
 							Image curImage = Toolkit.getDefaultToolkit().createImage( getClass().getResource("/ru/torment/icons/check_24.png") );
 							setCursor( Toolkit.getDefaultToolkit().createCustomCursor( curImage, new Point(8,8), "CustomCursor" ) );
 							if ( e.getX() > getWidth() - 20 )  // Быстрый сдвиг
 							{
 								GameFrame.jLabel.setText("X: " + e.getX() + ", Y: " + e.getY() + " >>>>");
-								gameMapShiftValue = gameMapShiftValue_Fast;
+								gameMap.gameMapShiftValue = gameMap.gameMapShiftValue_Fast;
 							}
 						}
 						// Сдвиг карты влево
 						else if ( e.getX() < 50 )
 						{
-							isGameMapShift_Left = true;
-							gameMapShiftValue = gameMapShiftValue_Normal;
+							gameMap.isGameMapShift_Left = true;
+							gameMap.gameMapShiftValue = gameMap.gameMapShiftValue_Normal;
 							GameFrame.jLabel.setText("X: " + e.getX() + ", Y: " + e.getY() + " <<");
 							if ( e.getX() < 20 )  // Быстрый сдвиг
 							{
 								GameFrame.jLabel.setText("X: " + e.getX() + ", Y: " + e.getY() + " <<<<");
-								gameMapShiftValue = gameMapShiftValue_Fast;
+								gameMap.gameMapShiftValue = gameMap.gameMapShiftValue_Fast;
 							}
 						}
 
 						// Сдвиг карты вниз
 						if ( e.getY() > getHeight() - 50 )
 						{
-							isGameMapShift_Down = true;
-							gameMapShiftValue = gameMapShiftValue_Normal;
+							gameMap.isGameMapShift_Down = true;
+							gameMap.gameMapShiftValue = gameMap.gameMapShiftValue_Normal;
 							GameFrame.jLabel.setText("X: " + e.getX() + ", Y: " + e.getY() + " vv");
 							if ( e.getY() > getHeight() - 20 )  // Быстрый сдвиг
 							{
 								GameFrame.jLabel.setText("X: " + e.getX() + ", Y: " + e.getY() + " vvvv");
-								gameMapShiftValue = gameMapShiftValue_Fast;
+								gameMap.gameMapShiftValue = gameMap.gameMapShiftValue_Fast;
 							}
 						}
 						// Сдвиг карты вверх
 						else if ( e.getY() < 50 )
 						{
-							isGameMapShift_Up = true;
-							gameMapShiftValue = gameMapShiftValue_Normal;
+							gameMap.isGameMapShift_Up = true;
+							gameMap.gameMapShiftValue = gameMap.gameMapShiftValue_Normal;
 							GameFrame.jLabel.setText("X: " + e.getX() + ", Y: " + e.getY() + " ^^");
 							if ( e.getY() < 20 )  // Быстрый сдвиг
 							{
 								GameFrame.jLabel.setText("X: " + e.getX() + ", Y: " + e.getY() + " ^^^^");
-								gameMapShiftValue = gameMapShiftValue_Fast;
+								gameMap.gameMapShiftValue = gameMap.gameMapShiftValue_Fast;
 							}
 						}
 					}
@@ -316,6 +275,8 @@ public class GameField extends JComponent implements ActionListener
 	}
 
 	long elapsedTime = 0;
+	//======================================================================================
+	//======================================================================================
 	public void startGame()
 	{
 		System.out.println(" + GameClient::GameField::startGame()");
@@ -348,7 +309,7 @@ public class GameField extends JComponent implements ActionListener
 	//======================================================================================
 	public static GameField getInstance()
 	{
-		System.out.println(" + DesktopChatClient::GameField::getInstance()");
+		System.out.println(" + GameClient::GameField::getInstance()");
 		if ( gameField == null ) { gameField = new GameField( Color.GREEN ); }
 		return gameField;
 	}
@@ -357,7 +318,7 @@ public class GameField extends JComponent implements ActionListener
 	//======================================================================================
 	public static void destroyInstance()
 	{
-		System.out.println(" + DesktopChatClient::GameField::destroyInstance()");
+		System.out.println(" + GameClient::GameField::destroyInstance()");
 		if ( gameField != null ) { gameField = null; }
 	}
 
@@ -365,7 +326,7 @@ public class GameField extends JComponent implements ActionListener
 	//======================================================================================
 	public void timerStart()
 	{
-		System.out.println(" + DesktopChatClient::GameField::timerStart()");
+		System.out.println(" + GameClient::GameField::timerStart()");
 		timer.start();
 	}
 
@@ -373,7 +334,7 @@ public class GameField extends JComponent implements ActionListener
 	//======================================================================================
 	public void timerStop()
 	{
-		System.out.println(" + DesktopChatClient::GameField::timerStop()");
+		System.out.println(" + GameClient::GameField::timerStop()");
 		timer.stop();
 	}
 
@@ -382,78 +343,17 @@ public class GameField extends JComponent implements ActionListener
 	@Override
 	public void actionPerformed( ActionEvent e )
 	{ 
-//		System.out.println(" + DesktopChatClient::GameField::actionPerformed()");
+//		System.out.println(" + GameClient::GameField::actionPerformed()");
 		repaint();
 	}
 
-	Timer timer_GameMapShift = new Timer(
-			50,
-			new ActionListener()
-			{
-				@Override
-				public void actionPerformed( ActionEvent e )
-				{
-					if ( isGameMapShift_Left )
-					{
-						if ( baseGameMapX1 <= 0 )
-						{
-							baseGameMapX1 = 0;
-							baseGameMapX2 = getWidth();
-						}
-						else
-						{
-							baseGameMapX1 -= gameMapShiftValue;
-							baseGameMapX2 -= gameMapShiftValue;
-						}
-					}
-					if ( isGameMapShift_Right )
-					{
-						if ( baseGameMapX2 >= baseGameMap.getWidth(null) )
-						{
-							baseGameMapX2 = baseGameMap.getWidth(null);
-							baseGameMapX1 = baseGameMapX2 - getWidth();
-						}
-						else
-						{
-							baseGameMapX1 += gameMapShiftValue;
-							baseGameMapX2 += gameMapShiftValue;
-						}
-					}
-					if ( isGameMapShift_Up )
-					{
-						if ( baseGameMapY1 <= 0 )
-						{
-							baseGameMapY1 = 0;
-							baseGameMapY2 = getHeight();
-						}
-						else
-						{
-							baseGameMapY1 -= gameMapShiftValue;
-							baseGameMapY2 -= gameMapShiftValue;
-						}
-					}
-					if ( isGameMapShift_Down )
-					{
-						if ( baseGameMapY2 >= baseGameMap.getHeight(null) )
-						{
-							baseGameMapY2 = baseGameMap.getHeight(null);
-							baseGameMapY1 = baseGameMapY2 - getHeight();
-						}
-						else
-						{
-							baseGameMapY1 += gameMapShiftValue;
-							baseGameMapY2 += gameMapShiftValue;
-						}
-					}
-				}
-			});
 
 	//======================================================================================
 	//======================================================================================
 	@Override
 	protected void paintComponent( Graphics g )
 	{
-//		System.out.println(" + DesktopChatClient::GameField::paintComponent()");
+//		System.out.println(" + GameClient::GameField::paintComponent()");
 
 		Graphics2D g2d = (Graphics2D) g;
 //		g2d.setColor( Color.white );
@@ -463,14 +363,21 @@ public class GameField extends JComponent implements ActionListener
 //		g2d.setColor( Color.black );
 //		g2d.drawRect( 0, 0, width - 1, height - 1 );
 
-		g2d.drawImage( baseGameMap, 0, 0, getWidth(), getHeight(), baseGameMapX1, baseGameMapY1, baseGameMapX2, baseGameMapY2, null );
+		gameMap.update();
+		gameMap.render( g2d );
 
 		g2d.setRenderingHint( RenderingHints.KEY_ANTIALIASING, RenderingHints.VALUE_ANTIALIAS_ON );
 		g2d.scale( scale, scale );
 
+		for ( Unit unit : list_DeadUnit )
+		{
+			unit.update( 20 );//elapsedTime );
+			unit.render( g2d );
+		}
+
 		for ( Unit unit : list_Unit )
 		{
-//			System.out.println(" + DesktopChatClient::GameField::paintComponent() --- unit ID: " + unit.getId() + " --- Name: " + unit.getName() + " --- Type: " + unit.getUnitType() );
+//			System.out.println(" + GameClient::GameField::paintComponent() --- unit ID: " + unit.getId() + " --- Name: " + unit.getName() + " --- Type: " + unit.getUnitType() );
 
 /*
 			String iconPath = "/ru/torment/icons/";
@@ -555,24 +462,28 @@ public class GameField extends JComponent implements ActionListener
 	 * @param keyColor Masking color
 	 * @return Masked image
 	 */
-	public static BufferedImage applyMask(Image img, Color keyColor) {
-		BufferedImage alpha = createImage(img.getWidth(null), img.getHeight(null), Transparency.BITMASK);
-		
+	public static BufferedImage applyMask( Image img, Color keyColor )
+	{
+		BufferedImage alpha = createImage( img.getWidth(null), img.getHeight(null), Transparency.BITMASK );
+
 		Graphics2D g = alpha.createGraphics();
-		g.setComposite(AlphaComposite.Src);
-		g.drawImage(img, 0, 0, null);
+		g.setComposite( AlphaComposite.Src );
+		g.drawImage( img, 0, 0, null );
 		g.dispose();
-		
-		for (int y = 0; y < alpha.getHeight(); y++) {
-			for (int x = 0; x < alpha.getWidth(); x++) {
+
+		for ( int y = 0; y < alpha.getHeight(); y++ )
+		{
+			for ( int x = 0; x < alpha.getWidth(); x++ )
+			{
 				int col = alpha.getRGB(x, y);
-				if (col == keyColor.getRGB()) {
+				if ( col == keyColor.getRGB() )
+				{
 					// make transparent
-					alpha.setRGB(x, y, col & 0x00ffffff);
+					alpha.setRGB( x, y, col & 0x00ffffff );
 				}
 			}
 		}
-		
+
 		return alpha;
 	}
 
@@ -716,35 +627,57 @@ public class GameField extends JComponent implements ActionListener
 
 
 	//======================================================================================
-	// Проверка досягаемости других объектов относительно текущего
+	// Выдать список объектов взаимодействующих с текущим объектом
 	//======================================================================================
-	public static List<Unit> getEnemysInKillZone( Unit unit )
+	public static List<Unit> getUnitsInteractingWithCurrentUnit( Unit unit_Current, Integer interactionDistance )
 	{
-		List<Unit> list_EnemyUnits = new ArrayList<Unit>();
-		for ( Unit unit_Enemy : list_Unit )
+		List<Unit> list_InteractingUnits = new ArrayList<Unit>();
+		for ( Unit unit_Interacting : list_Unit )
 		{
-			if ( unit_Enemy.isDead() ) { continue; }
+			if ( unit_Interacting.isDead() ) { continue; }
 
-			if ( unit.getCoordX() > unit_Enemy.getCoordX() && unit.getCoordX() <= unit_Enemy.getCoordX() + unit.getAttackRadius() )
+			if ( unit_Current.getCoordX() > unit_Interacting.getCoordX() && unit_Current.getCoordX() <= unit_Interacting.getCoordX() + interactionDistance )
 			{
-				if ( ( unit.getCoordY() > unit_Enemy.getCoordY() && unit.getCoordY() <= unit_Enemy.getCoordY() + unit.getAttackRadius() ) ||
-					 ( unit.getCoordY() < unit_Enemy.getCoordY() && unit.getCoordY() >= unit_Enemy.getCoordY() - unit.getAttackRadius() ) )
+				if ( ( unit_Current.getCoordY() > unit_Interacting.getCoordY() && unit_Current.getCoordY() <= unit_Interacting.getCoordY() + interactionDistance ) ||
+					 ( unit_Current.getCoordY() < unit_Interacting.getCoordY() && unit_Current.getCoordY() >= unit_Interacting.getCoordY() - interactionDistance ) )
 				{
-					System.out.println(" + DesktopChatClient::GameField::paintComponent() --- Unit: " + unit.getName() + " --- attacked Unit: " + unit_Enemy.getName() );
-					list_EnemyUnits.add( unit_Enemy );
+					System.out.println(" + GameClient::GameField::getUnitsInteractingWithCurrentUnit() --- Current Unit: " + unit_Current.getName() + "_" + unit_Current.getId() + " --- interact with Unit: " + unit_Interacting.getName() + "_" + unit_Interacting.getId() );
+					list_InteractingUnits.add( unit_Interacting );
 				}
 			}
-			else if ( unit.getCoordX() < unit_Enemy.getCoordX() && unit.getCoordX() >= unit_Enemy.getCoordX() - unit.getAttackRadius() )
+			else if ( unit_Current.getCoordX() < unit_Interacting.getCoordX() && unit_Current.getCoordX() >= unit_Interacting.getCoordX() - interactionDistance )
 			{
-				if ( ( unit.getCoordY() > unit_Enemy.getCoordY() && unit.getCoordY() <= unit_Enemy.getCoordY() + unit.getAttackRadius() ) ||
-					 ( unit.getCoordY() < unit_Enemy.getCoordY() && unit.getCoordY() >= unit_Enemy.getCoordY() - unit.getAttackRadius() ) )
+				if ( ( unit_Current.getCoordY() > unit_Interacting.getCoordY() && unit_Current.getCoordY() <= unit_Interacting.getCoordY() + interactionDistance ) ||
+					 ( unit_Current.getCoordY() < unit_Interacting.getCoordY() && unit_Current.getCoordY() >= unit_Interacting.getCoordY() - interactionDistance ) )
 				{
-					System.out.println(" + DesktopChatClient::GameField::paintComponent() --- Unit: " + unit.getName() + " --- attacked Unit: " + unit_Enemy.getName() );
-					list_EnemyUnits.add( unit_Enemy );
+					System.out.println(" + GameClient::GameField::getUnitsInteractingWithCurrentUnit() --- Current Unit: " + unit_Current.getName() + "_" + unit_Current.getId() + " --- interact with Unit: " + unit_Interacting.getName() + "_" + unit_Interacting.getId() );
+					list_InteractingUnits.add( unit_Interacting );
 				}
 			}
 		}
+		return list_InteractingUnits;
+	}
+
+	//======================================================================================
+	// Выдать список вражеских объектов находящихся в зоне поражения текущего объекта
+	//======================================================================================
+	public static List<Unit> getEnemysInKillZone( Unit unit_Current )
+	{
+		List<Unit> list_EnemyUnits = new ArrayList<Unit>();
+		for ( Unit unit : getUnitsInteractingWithCurrentUnit( unit_Current, unit_Current.getAttackRadius() ) )
+		{
+			if ( unit.isFriend() ) { continue; }
+			list_EnemyUnits.add( unit );
+		}
 		return list_EnemyUnits;
+	}
+
+	//======================================================================================
+	// Выдать список вражеских объектов находящихся в зоне поражения текущего объекта
+	//======================================================================================
+	public static List<Unit> getUnitsNearCurrentUnit( Unit unit_Current )
+	{
+		return getUnitsInteractingWithCurrentUnit( unit_Current, unit_Current.getWidth()/2 );
 	}
 
 
@@ -752,7 +685,7 @@ public class GameField extends JComponent implements ActionListener
 	//======================================================================================
 	private void addUnit( Unit unit )
 	{
-		System.out.println(" + DesktopChatClient::GameField::addUnit()");
+		System.out.println(" + GameClient::GameField::addUnit()");
 		list_Unit.add( unit );
 		repaint();
 	}
@@ -761,7 +694,7 @@ public class GameField extends JComponent implements ActionListener
 	//======================================================================================
 	private void deleteUnit( Unit unit )
 	{
-		System.out.println(" + DesktopChatClient::GameField::deleteUnit()");
+		System.out.println(" + GameClient::GameField::deleteUnit()");
 		list_Unit.remove( unit );
 		repaint();
 	}
@@ -770,7 +703,7 @@ public class GameField extends JComponent implements ActionListener
 	//======================================================================================
 	private void moveUnit( Unit unitForMove )
 	{
-		System.out.println(" + DesktopChatClient::GameField::moveUnit()");
+		System.out.println(" + GameClient::GameField::moveUnit()");
 		for ( Unit unit : list_Unit )
 		{
 			if ( unit.equals( unitForMove ) )
@@ -787,7 +720,7 @@ public class GameField extends JComponent implements ActionListener
 	//======================================================================================
 	public void newGameData( GameData gameData )
 	{
-		System.out.println(" + DesktopChatClient::GameField::newGameData()");
+		System.out.println(" + GameClient::GameField::newGameData()");
 		if ( gameData.getGameDataType().equals( GameDataType.NEW_UNIT ) )
 		{
 			addUnit( gameData.getUnit() );
@@ -805,6 +738,8 @@ public class GameField extends JComponent implements ActionListener
 	//======================================================================================
 	public Color getColorMy()    { return colorMy;    }
 	public User  getSecondUser() { return secondUser; }
+	public static List<Unit> getListUnits()     { return list_Unit;     }
+	public static List<Unit> getListDeadUnits() { return list_DeadUnit; }
 
 	//======================================================================================
 	public void setColorMy(    Color colorMy    ) { this.colorMy    = colorMy;    }

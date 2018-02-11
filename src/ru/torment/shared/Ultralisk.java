@@ -20,10 +20,11 @@ public class Ultralisk extends Unit
 	}
 
 	//======================================================================================
-	public Ultralisk( UnitType unitType, String name, Color color, Double coordX, Double coordY, Integer speed )
+	public Ultralisk( Color color, Double coordX, Double coordY, Integer speed )
 	{
-		super( bufferedImages, unitType, name, color, coordX, coordY, bufferedImages[0].getWidth(), bufferedImages[0].getHeight(), speed );
-		
+		super( bufferedImages, UnitType.ULTRALISK, "Ultralisk", color, coordX, coordY, bufferedImages[0].getWidth(), bufferedImages[0].getHeight(), speed );
+
+		this.setRace( Race.ZERG );
 		int[] animation = { 5 };
 		this.setAnimationFrame( animation );
 		this.setAnimate(true);
@@ -31,8 +32,12 @@ public class Ultralisk extends Unit
 		this.setAnimationTimer( new Timer(60) );
 
 		createMovingDirectionAnimationMap();
+		createAttackDirectionAnimationMap();
+		createDeathAnimation();
 	}
 
+	//======================================================================================
+	// Анимация движений
 	//======================================================================================
 	void createMovingDirectionAnimationMap()
 	{
@@ -57,6 +62,42 @@ public class Ultralisk extends Unit
 			map_MovingDirectionAnimation.put( MovingDirection.DOWN_LEFT,  new int[]{ 2, 12, 22, 32, 42, 52, 62, 72, 82 } );
 			map_MovingDirectionAnimation.put( MovingDirection.LEFT_down,  new int[]{ 3, 13, 23, 33, 43, 53, 63, 73, 83 } );
 			map_MovingDirectionAnimation.put( MovingDirection.LEFT,       new int[]{ 4, 14, 24, 34, 44, 54, 64, 74, 84 } );
+	}
+
+	//======================================================================================
+	// Анимация атаки
+	//======================================================================================
+	void createAttackDirectionAnimationMap()
+	{
+		map_AttackDirectionAnimation = new HashMap< MovingDirection, int[] >();
+			map_AttackDirectionAnimation.put( MovingDirection.LEFT,       new int[]{ 145, 135, 125, 115, 105,  95 } );
+			map_AttackDirectionAnimation.put( MovingDirection.LEFT_up,    new int[]{ 146, 136, 126, 116, 106,  96 } );
+			map_AttackDirectionAnimation.put( MovingDirection.UP_LEFT,    new int[]{ 147, 137, 127, 117, 107,  97 } );
+			map_AttackDirectionAnimation.put( MovingDirection.UP_left,    new int[]{ 148, 138, 128, 118, 108,  98 } );
+			map_AttackDirectionAnimation.put( MovingDirection.UP,         new int[]{ 149, 139, 129, 119, 109,  99 } );
+			map_AttackDirectionAnimation.put( MovingDirection.UP,         new int[]{ 300, 290, 280, 270, 260, 250 } );
+			map_AttackDirectionAnimation.put( MovingDirection.UP_right,   new int[]{ 301, 291, 281, 271, 261, 251 } );
+			map_AttackDirectionAnimation.put( MovingDirection.UP_RIGHT,   new int[]{ 302, 292, 282, 272, 262, 252 } );
+			map_AttackDirectionAnimation.put( MovingDirection.RIGHT_up,   new int[]{ 303, 293, 283, 273, 263, 253 } );
+			map_AttackDirectionAnimation.put( MovingDirection.RIGHT,      new int[]{ 303, 294, 284, 274, 264, 254 } );
+			map_AttackDirectionAnimation.put( MovingDirection.RIGHT,      new int[]{ 305, 295, 285, 275, 265, 255 } );
+			map_AttackDirectionAnimation.put( MovingDirection.RIGHT_down, new int[]{ 306, 296, 286, 276, 266, 256 } );
+			map_AttackDirectionAnimation.put( MovingDirection.DOWN_RIGHT, new int[]{ 307, 297, 287, 277, 267, 257 } );
+			map_AttackDirectionAnimation.put( MovingDirection.DOWN_right, new int[]{ 308, 298, 288, 278, 268, 258 } );
+			map_AttackDirectionAnimation.put( MovingDirection.DOWN,       new int[]{ 309, 299, 289, 279, 269, 259 } );
+			map_AttackDirectionAnimation.put( MovingDirection.DOWN,       new int[]{ 140, 130, 120, 110, 100,  90 } );
+			map_AttackDirectionAnimation.put( MovingDirection.DOWN_left,  new int[]{ 141, 131, 121, 111, 101,  91 } );
+			map_AttackDirectionAnimation.put( MovingDirection.DOWN_LEFT,  new int[]{ 142, 132, 122, 112, 102,  92 } );
+			map_AttackDirectionAnimation.put( MovingDirection.LEFT_down,  new int[]{ 143, 133, 123, 113, 103,  93 } );
+			map_AttackDirectionAnimation.put( MovingDirection.LEFT,       new int[]{ 144, 134, 124, 114, 104,  94 } );
+	}
+
+	//======================================================================================
+	// Анимация гибели
+	//======================================================================================
+	void createDeathAnimation()
+	{
+		deathAnimation = new int[]{ 310, 311, 312, 313, 314, 315, 316, 317, 318, 319 };
 	}
 
 	//======================================================================================

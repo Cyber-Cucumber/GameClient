@@ -7,10 +7,12 @@ import java.awt.RenderingHints;
 import java.awt.event.ActionEvent;
 import java.awt.event.ActionListener;
 
+import javax.swing.Box;
 import javax.swing.JButton;
 import javax.swing.JFrame;
 import javax.swing.JLabel;
 import javax.swing.JPanel;
+import javax.swing.JTextArea;
 
 import ru.torment.shared.Ultralisk;
 import ru.torment.shared.Unit;
@@ -18,7 +20,8 @@ import ru.torment.shared.UnitType;
 
 public class GameFrame
 {
-	public static JLabel jLabel = null;
+	public static JLabel jLabel;
+	public static JTextArea jTextArea;
 
 	WindowedMode windowedMode;
 	public GameFrame()
@@ -30,20 +33,30 @@ public class GameFrame
 			gameField.setColorMy( Color.RED );
 
 		JFrame jFrame = new JFrame("Game");
-			jFrame.setSize( new Dimension(1000, 750) );
+			jFrame.setSize( new Dimension(1600, 850) );
 			jFrame.setDefaultCloseOperation( JFrame.EXIT_ON_CLOSE );
 //			jFrame.setIgnoreRepaint(true);
 
 		JPanel panel = new JPanel();
 		panel.add( gameField );
 
+		Box verticalBox = Box.createVerticalBox();
+		panel.add( verticalBox );
+
+		jTextArea = new JTextArea("Инфо о выделенном объекте");
+			jTextArea.setEditable(false);
+			jTextArea.setRows(30);
+			jTextArea.setLineWrap(true);
+			jTextArea.setWrapStyleWord(true);
+		verticalBox.add( jTextArea );
+
 		final JButton button = new JButton("Start");
-		panel.add( button );
+		verticalBox.add( button );
 
 		jLabel = new JLabel();
 			jLabel.setForeground( Color.RED );
 			jLabel.setPreferredSize( new Dimension(150, 50) );
-		panel.add( jLabel );
+		verticalBox.add( jLabel );
 
 		jFrame.getContentPane().add( panel );
 		jFrame.setVisible(true);
@@ -73,7 +86,7 @@ public class GameFrame
 		BaseTimer bsTimer = new SystemTimer();
 		bsTimer.refresh();
 
-		Unit unit = new Ultralisk( UnitType.BMP, "Ball BMP", Color.BLUE, 100D, 100D, 3 );
+		Unit unit = new Ultralisk( Color.BLUE, 100D, 100D, 3 );
 
 		while (true)
 		{
