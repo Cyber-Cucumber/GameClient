@@ -1,0 +1,62 @@
+<xs:schema attributeFormDefault="unqualified" elementFormDefault="qualified" xmlns:xs="http://www.w3.org/2001/XMLSchema">
+
+  <xs:element name="tileset" type="tileset"/>
+
+  <xs:complexType name="tileset">
+    <xs:sequence>
+      <xs:element name="image" type="image"/>
+      <xs:element name="terraintypes" minOccurs="0">
+        <xs:complexType>
+          <xs:sequence>
+            <xs:element name="terrain" type="terrain" minOccurs="0" maxOccurs="unbounded"/>
+          </xs:sequence>
+        </xs:complexType>
+      </xs:element>
+      <xs:element name="tiles">
+        <xs:complexType>
+          <xs:sequence>
+            <xs:element name="tile" type="tile"  minOccurs="0" maxOccurs="unbounded"/>
+          </xs:sequence>
+        </xs:complexType>
+      </xs:element>
+    </xs:sequence>
+    <xs:attribute type="xs:string"  name="name"/>
+    <xs:attribute type="xs:integer" name="tilewidth"/>
+    <xs:attribute type="xs:integer" name="tileheight"/>
+    <xs:attribute type="xs:integer" name="tilecount"/>
+    <xs:attribute type="xs:integer" name="columns"/>
+  </xs:complexType>
+
+  <xs:complexType name="image">
+    <xs:attribute type="xs:string"  name="source"/>
+    <xs:attribute type="xs:integer" name="width"/>
+    <xs:attribute type="xs:integer" name="height"/>
+  </xs:complexType>
+
+  <xs:complexType name="terrain">
+    <xs:attribute type="xs:string"  name="name" use="optional"/>
+    <xs:attribute type="xs:integer" name="tile" use="optional"/>
+  </xs:complexType>
+
+  <xs:complexType name="tile">
+    <xs:sequence>
+      <xs:element name="properties" minOccurs="0">
+        <xs:complexType>
+          <xs:sequence>
+            <xs:element name="property" type="property"/>
+          </xs:sequence>
+        </xs:complexType>
+      </xs:element>
+    </xs:sequence>
+    <xs:attribute type="xs:integer" name="id"      use="optional"/>
+    <xs:attribute type="xs:string"  name="terrain" use="optional"/>
+    <xs:attribute type="xs:string"  name="type"    use="optional"/>
+  </xs:complexType>
+
+  <xs:complexType name="property">
+    <xs:attribute type="xs:string" name="name"  use="optional"/>
+    <xs:attribute type="xs:string" name="type"  use="optional"/>
+    <xs:attribute type="xs:string" name="value" use="optional"/>
+  </xs:complexType>
+
+</xs:schema>

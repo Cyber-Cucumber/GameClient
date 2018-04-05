@@ -1,0 +1,72 @@
+<xs:schema attributeFormDefault="unqualified" elementFormDefault="qualified" xmlns:xs="http://www.w3.org/2001/XMLSchema">
+  <xs:element name="data">
+    <xs:complexType>
+      <xs:simpleContent>
+        <xs:extension base="xs:string">
+          <xs:attribute type="xs:string" name="encoding" use="optional"/>
+        </xs:extension>
+      </xs:simpleContent>
+    </xs:complexType>
+  </xs:element>
+  <xs:element name="object">
+    <xs:complexType>
+      <xs:simpleContent>
+        <xs:extension base="xs:string">
+          <xs:attribute type="xs:byte" name="id"/>
+          <xs:attribute type="xs:string" name="name"/>
+          <xs:attribute type="xs:float" name="x"/>
+          <xs:attribute type="xs:short" name="y"/>
+          <xs:attribute type="xs:float" name="width"/>
+          <xs:attribute type="xs:float" name="height"/>
+          <xs:attribute type="xs:byte" name="visible"/>
+        </xs:extension>
+      </xs:simpleContent>
+    </xs:complexType>
+  </xs:element>
+  <xs:element name="tileset">
+    <xs:complexType>
+      <xs:simpleContent>
+        <xs:extension base="xs:string">
+          <xs:attribute type="xs:short" name="firstgid" use="optional"/>
+          <xs:attribute type="xs:string" name="source" use="optional"/>
+        </xs:extension>
+      </xs:simpleContent>
+    </xs:complexType>
+  </xs:element>
+  <xs:element name="layer">
+    <xs:complexType>
+      <xs:sequence>
+        <xs:element ref="data"/>
+      </xs:sequence>
+      <xs:attribute type="xs:string" name="name" use="optional"/>
+      <xs:attribute type="xs:byte" name="width" use="optional"/>
+      <xs:attribute type="xs:byte" name="height" use="optional"/>
+    </xs:complexType>
+  </xs:element>
+  <xs:element name="objectgroup">
+    <xs:complexType>
+      <xs:sequence>
+        <xs:element ref="object"/>
+      </xs:sequence>
+      <xs:attribute type="xs:string" name="name"/>
+    </xs:complexType>
+  </xs:element>
+  <xs:element name="map">
+    <xs:complexType>
+      <xs:sequence>
+        <xs:element ref="tileset" maxOccurs="unbounded" minOccurs="0"/>
+        <xs:element ref="layer" maxOccurs="unbounded" minOccurs="0"/>
+        <xs:element ref="objectgroup"/>
+      </xs:sequence>
+      <xs:attribute type="xs:float" name="version"/>
+      <xs:attribute type="xs:string" name="tiledversion"/>
+      <xs:attribute type="xs:string" name="orientation"/>
+      <xs:attribute type="xs:string" name="renderorder"/>
+      <xs:attribute type="xs:byte" name="width"/>
+      <xs:attribute type="xs:byte" name="height"/>
+      <xs:attribute type="xs:byte" name="tilewidth"/>
+      <xs:attribute type="xs:byte" name="tileheight"/>
+      <xs:attribute type="xs:byte" name="nextobjectid"/>
+    </xs:complexType>
+  </xs:element>
+</xs:schema>
